@@ -273,7 +273,7 @@
     display:flex; gap:26px; width:max-content;
     animation:execScroll 46s linear infinite;
   }
-  .exec-carousel:hover .exec-track{ animation-play-state:paused; }
+  .exec-track.paused{ animation-play-state:paused; }
   @keyframes execScroll{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
   .exec-card{
     display:flex; flex-direction:column;
@@ -799,6 +799,29 @@
       </div>`;
   }
   execTrack.innerHTML = executives.map(execCardHTML).join('') + executives.map(execCardHTML).join('');
+
+  // Pause the rolling carousel only while a mouse is genuinely hovering it
+  // (desktop), and always resume it — including after a tap sends someone
+  // to WhatsApp and they come back to the tab.
+  if(window.matchMedia('(hover:hover) and (pointer:fine)').matches){
+    const execCarousel = document.querySelector('.exec-carousel');
+    execCarousel.addEventListener('mouseenter', ()=> execTrack.classList.add('paused'));
+    execCarousel.addEventListener('mouseleave', ()=> execTrack.classList.remove('paused'));
+  }
+  // Some mobile browsers fully freeze CSS animations while a tab sits in the
+  // background (e.g. while WhatsApp is open) and don't cleanly resume them —
+  // so on return, force a hard restart rather than trusting it to continue.
+  function kickExecCarousel(){
+    execTrack.classList.remove('paused');
+    execTrack.style.animation = 'none';
+    void execTrack.offsetWidth; // force reflow
+    execTrack.style.animation = '';
+  }
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.visibilityState === 'visible') kickExecCarousel();
+  });
+  window.addEventListener('pageshow', kickExecCarousel);
+  window.addEventListener('focus', kickExecCarousel);
 
   document.getElementById('generalJoin').href = waLink(SOCIAL_DIRECTOR_NUMBER, "Hi! I'd like to know more about NIMELSSA KDU.");
   document.getElementById('footerWa').href = waLink(SOCIAL_DIRECTOR_NUMBER, "Hi! I'd like to know more about NIMELSSA KDU.");
