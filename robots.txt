@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://nimelsa.github.io/Home-page-/sitemap.xml
